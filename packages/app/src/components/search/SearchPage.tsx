@@ -25,6 +25,9 @@ import {
 } from '@backstage/core-components';
 import { useApi } from '@backstage/core-plugin-api';
 
+import { AdrSearchResultListItem } from '@backstage/plugin-adr';
+import { AdrDocument } from '@backstage/plugin-adr-common';
+
 const useStyles = makeStyles((theme: Theme) => ({
   bar: {
     padding: theme.spacing(1, 0),
@@ -70,6 +73,11 @@ const SearchPage = () => {
                   name: 'Documentation',
                   icon: <DocsIcon />,
                 },
+                {
+                  value: 'adr',
+                  name: 'Architecture Decision Records',
+                  icon: <DocsIcon />,
+                },
               ]}
             />
             <Paper className={classes.filters}>
@@ -113,6 +121,7 @@ const SearchPage = () => {
             <SearchResult>
               <CatalogSearchResultListItem icon={<CatalogIcon />} />
               <TechDocsSearchResultListItem icon={<DocsIcon />} />
+              <AdrSearchResultListItem icon={<DocsIcon />} />
             </SearchResult>
           </Grid>
         </Grid>

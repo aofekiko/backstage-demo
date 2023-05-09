@@ -8,6 +8,7 @@ import { PluginEnvironment } from '../types';
 import { DefaultCatalogCollatorFactory } from '@backstage/plugin-catalog-backend';
 import { DefaultTechDocsCollatorFactory } from '@backstage/plugin-techdocs-backend';
 import { Router } from 'express';
+import { DefaultAdrCollatorFactory } from '@backstage/plugin-adr-backend';
 
 export default async function createPlugin(
   env: PluginEnvironment,
@@ -22,7 +23,7 @@ export default async function createPlugin(
   });
 
   const schedule = env.scheduler.createScheduledTaskRunner({
-    frequency: { minutes: 10 },
+    frequency: { minutes: 1 },
     timeout: { minutes: 15 },
     // A 3 second delay gives the backend server a chance to initialize before
     // any collators are executed, which may attempt requests against the API.
@@ -35,6 +36,18 @@ export default async function createPlugin(
     schedule,
     factory: DefaultCatalogCollatorFactory.fromConfig(env.config, {
       discovery: env.discovery,
+      tokenManager: env.tokenManager,
+    }),
+  });
+
+  indexBuilder.addCollator({
+    schedule,
+    factory: DefaultAdrCollatorFactory.fromConfig({
+      cache: env.cache,
+      config: env.config,
+      discovery: env.discovery,
+      logger: env.logger,
+      reader: env.reader,
       tokenManager: env.tokenManager,
     }),
   });
