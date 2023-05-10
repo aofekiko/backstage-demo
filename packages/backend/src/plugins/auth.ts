@@ -5,6 +5,10 @@ import {
 } from '@backstage/plugin-auth-backend';
 import { Router } from 'express';
 import { PluginEnvironment } from '../types';
+import {
+  stringifyEntityRef,
+  DEFAULT_NAMESPACE,
+} from '@backstage/catalog-model';
 
 export default async function createPlugin(
   env: PluginEnvironment,
@@ -37,7 +41,7 @@ export default async function createPlugin(
       //   https://backstage.io/docs/auth/identity-resolver
       github: providers.github.create({
         signIn: {
-          resolver(_, ctx) {
+          /*resolver(_, ctx) {
             const userRef = 'user:default/guest'; // Must be a full entity reference
             return ctx.issueToken({
               claims: {
@@ -45,8 +49,27 @@ export default async function createPlugin(
                 ent: [userRef], // A list of identities that the user claims ownership through
               },
             });
-          },
-          // resolver: providers.github.resolvers.usernameMatchingUserEntityName(),
+          },*/
+          //resolver: providers.github.resolvers.usernameMatchingUserEntityName(),
+          resolver: async ({ profile }, ctx) => {
+            if (!profile.displayName) {
+              throw new Error(
+                'Login failed, user profile does not contain a displayName',
+              );
+            }
+            const dispname = profile.displayName 
+            const userEntity = stringifyEntityRef({
+              kind: 'User',
+              name: dispname,
+              namespace: DEFAULT_NAMESPACE,
+            });
+            return ctx.issueToken({
+              claims: {
+                sub: userEntity,
+                ent: [userEntity],
+              },
+            });
+          }
         },
       }),
     },
