@@ -1,0 +1,13 @@
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: org
+  description: The whole organization
+spec:
+  type: business-unit
+  profile:
+    displayName: Organization
+    email: infrastructure@example.com
+    picture: https://example.com/groups/bu-infrastructure.jpeg
+  children: []
+  members: []

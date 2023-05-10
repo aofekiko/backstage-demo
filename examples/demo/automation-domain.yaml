@@ -1,0 +1,7 @@
+apiVersion: backstage.io/v1alpha1
+kind: Domain
+metadata:
+  name: automation
+  description: Everything that has to do with automation
+spec:
+  owner: org

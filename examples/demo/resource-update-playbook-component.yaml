@@ -1,0 +1,21 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: resourceupdateplaybook
+  links:
+    - url: https://dashboard.example.com
+      title: samplelink
+      icon: chat
+  annotations:
+    github.com/project-slug: aofekiko/basic-react-and-node-oauth2-Backstage
+    backstage.io/adr-location: /adrs
+    backstage.io/techdocs-ref: .
+spec:
+  type: ansible-playbook
+  lifecycle: prod
+  owner: rnd
+  consumesApis: ['rundeck-job-api']
+  dependsOn: ['component:default/resourceupdaterole', 'resource:default/bastion-1']
+  providesApis: ['resourceupdateapi']
+  
+

@@ -1,0 +1,8 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: bastion-1
+  description: my bastion for running rundeck automations 
+spec:
+  type: bastion
+  owner: rnd

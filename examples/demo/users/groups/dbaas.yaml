@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: dbaas
+  description: The DataBase As A Service unit
+spec:
+  type: business-unit
+  profile:
+    displayName: DBaaS
+    email: infrastructure@example.com
+    picture: https://example.com/groups/bu-infrastructure.jpeg
+  parent: 'platform'
+  children: []
+  members: []

@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: rnd
+  description: The research and development unit
+spec:
+  type: business-unit
+  profile:
+    displayName: R&D
+    email: infrastructure@example.com
+    picture: https://example.com/groups/bu-infrastructure.jpeg
+  parent: 'org'
+  children: []
+  members: ['ofek']

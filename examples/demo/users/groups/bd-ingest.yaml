@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: bd-ingest
+  description: The Big Data Ingest unit
+spec:
+  type: business-unit
+  profile:
+    displayName: BD Ingest
+    email: infrastructure@example.com
+    picture: https://example.com/groups/bu-infrastructure.jpeg
+  parent: 'bigdata'
+  children: []
+  members: []

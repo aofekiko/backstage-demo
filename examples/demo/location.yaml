@@ -1,0 +1,24 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: demo-objects
+spec:
+  type: url
+  targets:
+    - ./airflowsystem.yaml
+    - ./automation-domain.yaml
+    - ./reosurce-update-role-component.yaml
+    - ./resource-bastion-1.yaml
+    - ./resource-update-playbook-component.yaml
+    - ./resourceupdateapi.yaml 
+    - ./rundeck-job-api.yaml
+    - ./rundeck-runner-1-resource.yaml
+    - ./rundecksystem.yaml
+    - ./users/groups/bd-ingest.yaml
+    - ./users/groups/bigdata.yaml
+    - ./users/groups/dbaas.yaml
+    - ./users/groups/platform.yaml
+    - ./users/groups/r&d.yaml
+    - ./users/groups/org.yaml
+    - ./users/ofek/yaml
+    

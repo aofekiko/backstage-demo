@@ -1,0 +1,17 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: resourceupdateapi
+  description: Allows you to update resources of your namespace
+spec:
+  type: openapi
+  lifecycle: production
+  owner: rnd
+  system: rundeck
+  definition: |
+    openapi: 3.0.1
+    info:
+      title: TODO
+      license:
+        name: MIT
+      version: 1.0.0

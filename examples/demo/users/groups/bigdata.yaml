@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: bigdata
+  description: The big data Mador
+spec:
+  type: mador
+  profile:
+    displayName: Big Data
+    email: infrastructure@example.com
+    picture: https://example.com/groups/bu-infrastructure.jpeg
+  parent: 'org'
+  children: []
+  members: []

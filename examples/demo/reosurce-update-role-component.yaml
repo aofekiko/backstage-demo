@@ -1,0 +1,17 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: resourceupdaterole
+  links:
+    - url: https://dashboard.example.com
+      title: samplelink
+      icon: chat
+  annotations:
+    github.com/project-slug: aofekiko/basic-react-and-node-oauth2-Backstage
+    backstage.io/adr-location: /adrs
+    backstage.io/techdocs-ref: .
+spec:
+  type: ansible-role
+  lifecycle: prod
+  owner: rnd
+

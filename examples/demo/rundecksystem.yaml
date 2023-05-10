@@ -1,0 +1,8 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: rundeck
+  description: Handy platform to run our automations on
+spec:
+  owner: dbaas
+  domain: automation

@@ -1,0 +1,1523 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: rundeck-job-api
+  description: The rundeck Job API
+spec:
+  type: openapi
+  lifecycle: production
+  owner: dbaas
+  system: rundeck
+  definition: |
+    openapi: 3.0.1
+    info:
+      title: Rundeck
+      license:
+        name: MIT
+      version: 1.0.0
+    servers:
+    - url: /
+    paths:
+      /api/26/project/{project}/jobs:
+        get:
+          tags:
+          - project
+          - job
+          summary: List the jobs that exist for a project
+          operationId: jobList
+          parameters:
+          - name: project
+            in: path
+            description: Project name
+            required: true
+            schema:
+              type: string
+          - name: idList
+            in: query
+            description: Comma separated list of Job IDs to include
+            schema:
+              type: string
+          - name: groupPath
+            in: query
+            description: Group or partial group path to include all jobs within that group
+              path. Set to the special value "-" to match the top level jobs only.
+            schema:
+              type: string
+              default: '*'
+          - name: jobFilter
+            in: query
+            description: A filter for the job name. Matches any job name that contains
+              this value.
+            schema:
+              type: string
+          - name: jobExactFilter
+            in: query
+            description: An exact job name to match.
+            schema:
+              type: string
+          - name: groupPathExact
+            in: query
+            description: An exact group path to match. Set to the special value "-" to
+              match the top level jobs only.
+            schema:
+              type: string
+          - name: scheduledFilter
+            in: query
+            description: Specify whether to return only scheduled or only not scheduled
+              jobs.
+            schema:
+              type: boolean
+          - name: serverNodeUUIDFilter
+            in: query
+            description: In cluster mode, use to select scheduled jobs assigned to the
+              server with the given UUID.
+            schema:
+              type: string
+          responses:
+            200:
+              description: Expected response to a valid request
+              content:
+                application/json:
+                  schema:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Job'
+      /api/26/job/{id}/executions:
+        get:
+          tags:
+          - job
+          - execution
+          summary: List job executions
+          operationId: jobExecutionList
+          parameters:
+          - name: id
+            in: path
+            description: Job ID
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: List of executions for job
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/ExecutionList'
+        post:
+          tags:
+          - job
+          - execution
+          summary: Run the specified job
+          operationId: jobExecutionRun
+          parameters:
+          - name: id
+            in: path
+            description: Job ID
+            required: true
+            schema:
+              type: string
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ExecuteJobRequest'
+            required: false
+          responses:
+            200:
+              description: Expected response for a valid request
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/Execution'
+          x-codegen-request-body-name: request
+        delete:
+          tags:
+          - job
+          - execution
+          summary: Delete all job executions
+          operationId: jobExecutionDelete
+          parameters:
+          - name: id
+            in: path
+            description: Job ID
+            required: true
+            schema:
+              type: integer
+          responses:
+            204:
+              description: Content deleted
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/JobExecutionDelete'
+      /api/26/job/{jobID}/retry/{executionID}:
+        post:
+          tags:
+          - job
+          - execution
+          summary: Retry a failed job execution on failed nodes only or on the same as
+            the execution. This is the same functionality as the `Retry Failed Nodes ...`
+            button on the execution page.
+          operationId: jobRetryExecution
+          parameters:
+          - name: jobID
+            in: path
+            required: true
+            schema:
+              type: string
+          - name: executionID
+            in: path
+            required: true
+            schema:
+              type: integer
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/RetryExecutionRequest'
+            required: false
+          responses:
+            200:
+              description: Exected response to a valid request.
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/ExecutionList'
+          x-codegen-request-body-name: Request
+      /api/26/job/{id}:
+        get:
+          tags:
+          - job
+          summary: Export a single job definition in XML or YAML formats.
+          operationId: jobGet
+          parameters:
+          - name: id
+            in: path
+            description: ID of the job to export.
+            required: true
+            schema:
+              type: string
+          - name: format
+            in: query
+            schema:
+              type: string
+              default: xml
+              enum:
+              - xml
+              - yaml
+          responses:
+            200:
+              description: Expected response to a valid request.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    format: file
+            404:
+              description: Job does not exist
+              content: {}
+        delete:
+          tags:
+          - job
+          summary: Delete a single job definition.
+          operationId: jobDelete
+          parameters:
+          - name: id
+            in: path
+            description: ID of job to delete.
+            required: true
+            schema:
+              type: string
+          responses:
+            204:
+              description: Job was deleted.
+              content: {}
+            404:
+              description: Job not found.
+              content: {}
+      /api/26/job/{id}/info:
+        get:
+          tags:
+          - job
+          summary: Get metadata about a specific job.
+          operationId: jobInfoGet
+          parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: Expected response to a valid request.
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/JobMetadata'
+      /api/26/jobs/delete:
+        post:
+          tags:
+          - job
+          - bulk
+          summary: Delete multiple job definitions at once
+          operationId: jobBulkDelete
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  required:
+                  - ids
+                  type: object
+                  properties:
+                    ids:
+                      type: array
+                      items:
+                        type: string
+            required: true
+          responses:
+            200:
+              description: Job deleted response
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/JobBulkOperationResponse'
+          x-codegen-request-body-name: JobBulkDeleteRequest
+      /api/26/job/{id}/execution/enable:
+        post:
+          tags:
+          - job
+          - execution
+          summary: Enable executions for a job. (ACL requires toggle_execution action
+            for a job.)
+          operationId: jobExecutionEnable
+          parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: Job executions enabled
+              content:
+                application/json:
+                  schema:
+                    type: object
+      /api/26/job/{id}/execution/disable:
+        post:
+          tags:
+          - job
+          - execution
+          summary: Disable all executions for a job (scheduled or manual). (ACL requires
+            toggle_execution action for a job.)
+          operationId: jobExecutionDisable
+          parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: Job executions disabled
+              content:
+                application/json:
+                  schema:
+                    type: object
+      /api/26/job/{id}/schedule/enable:
+        post:
+          tags:
+          - job
+          - schedule
+          summary: Enable the schedule for a job. (ACL requires toggle_schedule action
+            for a job.)
+          operationId: jobScheduleEnable
+          parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: Job schedule enabled
+              content:
+                application/json:
+                  schema:
+                    type: object
+      /api/26/job/{id}/schedule/disable:
+        post:
+          tags:
+          - job
+          - schedule
+          summary: Disable the schedule for a job. (ACL requires toggle_schedule action
+            for a job.)
+          operationId: jobScheduleDisable
+          parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: Job schedules disabled
+              content:
+                application/json:
+                  schema:
+                    type: object
+      /api/26/jobs/execution/enable:
+        post:
+          tags:
+          - job
+          - execution
+          summary: Bulk enable job executions
+          operationId: jobExecutionBulkEnable
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  required:
+                  - ids
+                  type: object
+                  properties:
+                    ids:
+                      type: array
+                      items:
+                        type: string
+            required: true
+          responses:
+            200:
+              description: Job deleted response
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/JobBulkOperationResponse'
+          x-codegen-request-body-name: JobExecutionBulkEnableRequest
+      /api/26/jobs/execution/disable:
+        post:
+          tags:
+          - job
+          - execution
+          summary: Bulk disable job executions
+          operationId: jobExecutionBulkDisable
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  required:
+                  - ids
+                  type: object
+                  properties:
+                    ids:
+                      type: array
+                      items:
+                        type: string
+            required: true
+          responses:
+            200:
+              description: Job toggle execution response
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/JobBulkOperationResponse'
+          x-codegen-request-body-name: JobExecutionBulkDisableRequest
+      /api/26/jobs/schedule/enable:
+        post:
+          tags:
+          - job
+          - schedule
+          summary: Bulk enable job schedule
+          operationId: jobScheduleBulkEnable
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  required:
+                  - ids
+                  type: object
+                  properties:
+                    ids:
+                      type: array
+                      items:
+                        type: string
+            required: true
+          responses:
+            200:
+              description: Job toggle schedule response
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/JobBulkOperationResponse'
+          x-codegen-request-body-name: JobScheduleBulkEnableRequest
+      /api/26/jobs/schedule/disable:
+        post:
+          tags:
+          - job
+          - schedule
+          summary: Bulk disable job schedule
+          operationId: jobScheduleBulkDisable
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  required:
+                  - ids
+                  type: object
+                  properties:
+                    ids:
+                      type: array
+                      items:
+                        type: string
+            required: true
+          responses:
+            200:
+              description: Job toggle schedule response
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/JobBulkOperationResponse'
+          x-codegen-request-body-name: JobScheduleBulkDisableRequest
+      /api/26/job/{id}/input/file:
+        post:
+          tags:
+          - job
+          summary: Upload file as job option
+          operationId: jobInputFileUpload
+          parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+          - name: optionName
+            in: query
+            required: true
+            schema:
+              type: string
+          - name: fileName
+            in: query
+            required: true
+            schema:
+              type: string
+          requestBody:
+            content:
+              octet/stream:
+                schema:
+                  type: object
+                  format: file
+            required: true
+          responses:
+            200:
+              description: Yay
+              content: {}
+          x-codegen-request-body-name: File
+      /api/26/job/{id}/input/files:
+        get:
+          tags:
+          - job
+          summary: List uploaded input files for job
+          operationId: jobInputFileUpload2
+          parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: List of input files
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/JobInputFileListResponse'
+      /api/26/jobs/file/{id}:
+        get:
+          tags:
+          - job
+          summary: Get job input file info
+          operationId: jobInputFileInfoGet
+          parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: Job input file info
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/JobInputFileInfo'
+      /api/34/job/{id}/workflow:
+        get:
+          tags:
+          - job
+          summary: Get job workflow tree.
+          operationId: jobWorkflowGet
+          parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+          responses:
+            200:
+              description: Expected response to a valid request.
+              content:
+                application/json:
+                  schema:
+                    type: object
+    components:
+      schemas:
+        User:
+          type: object
+          properties:
+            login:
+              type: string
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+        ModifyUserRequest:
+          type: object
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+        SystemInfo:
+          type: object
+          properties:
+            system:
+              type: object
+              properties:
+                timestamp:
+                  type: object
+                  properties:
+                    epoch:
+                      type: number
+                    unit:
+                      type: string
+                    datetime:
+                      type: string
+                rundeck:
+                  type: object
+                  properties:
+                    version:
+                      type: string
+                    build:
+                      type: string
+                    node:
+                      type: string
+                    base:
+                      type: string
+                    apiversion:
+                      type: number
+                    serverUUID:
+                      type: string
+                executions:
+                  type: object
+                  properties:
+                    active:
+                      type: boolean
+                    executionMode:
+                      type: string
+                os:
+                  type: object
+                  properties:
+                    arch:
+                      type: string
+                    name:
+                      type: string
+                    version:
+                      type: string
+                jvm:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    vendor:
+                      type: string
+                    version:
+                      type: string
+                    implementationVersion:
+                      type: string
+                stats:
+                  type: object
+                  properties:
+                    uptime:
+                      type: object
+                      properties:
+                        duration:
+                          type: number
+                        unit:
+                          type: string
+                        since:
+                          type: object
+                          properties:
+                            epoch:
+                              type: number
+                            unit:
+                              type: string
+                            datetime:
+                              type: string
+                    cpu:
+                      type: object
+                      properties:
+                        loadAverage:
+                          type: object
+                          properties:
+                            unit:
+                              type: string
+                            average:
+                              type: number
+                        processors:
+                          type: number
+                    memory:
+                      type: object
+                      properties:
+                        unit:
+                          type: string
+                        max:
+                          type: number
+                        free:
+                          type: number
+                        total:
+                          type: number
+                    scheduler:
+                      type: object
+                      properties:
+                        running:
+                          type: number
+                        threadPoolSize:
+                          type: number
+                    threads:
+                      type: object
+                      properties:
+                        active:
+                          type: number
+                metrics:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+                    contentType:
+                      type: string
+                threadDump:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+                    contentType:
+                      type: string
+        LogStorage:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              description: True if plugin is configured
+            pluginName:
+              type: string
+              description: Name of the configured plugin
+            succeededCount:
+              type: number
+              description: Number of successful storage requests
+            failedCount:
+              type: number
+              description: Number of failed storage requests
+            queuedCount:
+              type: number
+              description: Number of queued storage requests
+            totalCount:
+              type: number
+              description: Total number of storage requests (currently queued plus previously
+                processed)
+            incompleteCount:
+              type: number
+              description: Number of storage requests which have not completed successfully
+            missingCount:
+              type: number
+              description: Number of executions for this cluster node which have no associated
+                storage requests
+        IncompleteLogExecution:
+          type: object
+          properties:
+            id:
+              type: string
+            project:
+              type: string
+            href:
+              type: string
+            permalink:
+              type: string
+            storage:
+              type: object
+              properties:
+                localFilesPresent:
+                  type: boolean
+                incompleteFiletypes:
+                  type: array
+                  items:
+                    type: string
+                queued:
+                  type: boolean
+                failed:
+                  type: boolean
+                date:
+                  type: string
+            errors:
+              type: array
+              items:
+                type: string
+        IncompleteFileType:
+          type: string
+          description: Comma-separated list of filetypes which have not be uploaded, e.g.
+            rdlog,state.json. Types are rdlog (log output), state.json (workflow state
+            data), execution.xml (execution definition)
+          enum:
+          - rdlog
+          - state.json
+          - execution.xml
+        IncompleteLogExecutions:
+          required:
+          - executions
+          - max
+          - offset
+          - total
+          type: object
+          properties:
+            total:
+              type: number
+            max:
+              type: number
+            offset:
+              type: number
+            executions:
+              type: array
+              items:
+                $ref: '#/components/schemas/IncompleteLogExecution'
+        TakeoverScheduleRequest:
+          type: object
+          properties:
+            server:
+              type: object
+              properties:
+                uuid:
+                  type: string
+                all:
+                  type: boolean
+            project:
+              type: string
+            job:
+              type: object
+              properties:
+                id:
+                  type: string
+        JobReference:
+          type: object
+          properties:
+            href:
+              type: string
+            permalink:
+              type: string
+            id:
+              type: string
+            pervious-owner:
+              type: string
+        TakeoverScheduleResponse:
+          type: object
+          properties:
+            takeoverSchedule:
+              type: object
+              properties:
+                project:
+                  type: string
+                jobs:
+                  type: object
+                  properties:
+                    failed:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/JobReference'
+                    successfull:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/JobReference'
+                    total:
+                      type: number
+                server:
+                  type: object
+                  properties:
+                    uuid:
+                      type: string
+                    all:
+                      type: boolean
+            self:
+              type: object
+              properties:
+                server:
+                  type: object
+                  properties:
+                    uuid:
+                      type: string
+            message:
+              type: string
+            apiversion:
+              type: number
+            success:
+              type: boolean
+        Project:
+          type: object
+          properties:
+            description:
+              type: string
+            name:
+              type: string
+            url:
+              type: string
+            config:
+              type: object
+              properties: {}
+        Job:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            group:
+              type: string
+            project:
+              type: string
+            description:
+              type: string
+            href:
+              type: string
+            permalink:
+              type: string
+            scheduled:
+              type: boolean
+            scheduleEnabled:
+              type: boolean
+            serverNodeUUID:
+              type: string
+            serverOwner:
+              type: string
+            enabled:
+              type: boolean
+        JobMetadata:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            group:
+              type: string
+            project:
+              type: string
+            description:
+              type: string
+            href:
+              type: string
+            permalink:
+              type: string
+            scheduled:
+              type: boolean
+            scheduleEnabled:
+              type: boolean
+            averageDuration:
+              type: number
+            options:
+              type: object
+              properties: {}
+        JobBulkOperationResponse:
+          required:
+          - allsuccessful
+          - requestCount
+          type: object
+          properties:
+            requestCount:
+              type: number
+              description: The number of job IDs that were in the delete request.
+            allsuccessful:
+              type: boolean
+            succeeded:
+              type: array
+              items:
+                $ref: '#/components/schemas/BulkJobSucceededInfo'
+            failed:
+              type: array
+              items:
+                $ref: '#/components/schemas/BulkJobFailedInfo'
+        JobInputFileListResponse:
+          required:
+          - files
+          - paging
+          type: object
+          properties:
+            paging:
+              $ref: '#/components/schemas/Paging'
+            files:
+              type: array
+              items:
+                $ref: '#/components/schemas/JobInputFileInfo'
+        JobInputFileInfo:
+          required:
+          - dateCreated
+          - expirationDate
+          - fileName
+          - fileState
+          - id
+          - jobId
+          - serverNodeUUID
+          - sha
+          - user
+          type: object
+          properties:
+            id:
+              type: string
+            user:
+              type: string
+            fileState:
+              type: string
+              enum:
+              - temp
+              - deleted
+              - expired
+              - retained
+            sha:
+              type: string
+            jobId:
+              type: string
+            dateCreated:
+              type: string
+            serverNodeUUID:
+              type: string
+            fileName:
+              type: string
+            size:
+              type: integer
+            expirationDate:
+              type: string
+            execId:
+              type: string
+        BulkJobSucceededInfo:
+          required:
+          - id
+          - message
+          type: object
+          properties:
+            id:
+              type: string
+            message:
+              type: string
+        BulkJobFailedInfo:
+          required:
+          - errorCode
+          - id
+          - message
+          type: object
+          properties:
+            id:
+              type: string
+            errorCode:
+              type: string
+            message:
+              type: string
+        ExecutionList:
+          type: object
+          properties:
+            paging:
+              $ref: '#/components/schemas/Paging'
+            executions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Execution'
+        Execution:
+          type: object
+          properties:
+            id:
+              type: number
+            href:
+              type: string
+            permalink:
+              type: string
+            status:
+              type: string
+              enum:
+              - running
+              - succeeded
+              - failed
+              - aborted
+              - timedout
+              - failed-with-retry
+              - scheduled
+              - other
+            customStatus:
+              type: string
+            project:
+              type: string
+            user:
+              type: string
+            serverUUID:
+              type: string
+            date-started:
+              type: object
+              properties:
+                unixtime:
+                  type: number
+                date:
+                  type: string
+            job:
+              $ref: '#/components/schemas/JobMetadata'
+            description:
+              type: string
+            argstring:
+              type: string
+            successfulNodes:
+              type: array
+              items:
+                type: string
+        JobExecutionDelete:
+          type: object
+          properties:
+            failedCount:
+              type: number
+            successCount:
+              type: number
+            allsuccessful:
+              type: boolean
+            requestCount:
+              type: number
+            failures:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  message:
+                    type: string
+        AclReference:
+          type: object
+          properties:
+            path:
+              type: string
+            type:
+              type: string
+            name:
+              type: string
+            href:
+              type: string
+        AclList:
+          type: object
+          properties:
+            path:
+              type: string
+            type:
+              type: string
+            href:
+              type: string
+            resources:
+              type: array
+              items:
+                $ref: '#/components/schemas/AclReference'
+        AclPolicyResponse:
+          required:
+          - contents
+          type: object
+          properties:
+            contents:
+              type: string
+              description: Policy as JSON encoded YAML string
+        InvalidAclPolicyResponse:
+          type: object
+          properties:
+            valid:
+              type: boolean
+            policies:
+              type: array
+              items:
+                type: object
+                properties:
+                  policy:
+                    type: string
+                  errors:
+                    type: array
+                    items:
+                      type: string
+        RetryExecutionRequest:
+          type: object
+          properties:
+            argString:
+              type: string
+              description: Argument string to pass to the job, of the form `-opt value
+                -opt2 value ...`
+            loglevel:
+              type: string
+              description: Loglevel to use
+              enum:
+              - DEBUG
+              - VERBOSE
+              - INFO
+              - WARN
+              - ERROR
+            asUser:
+              type: string
+              description: A username identifying the user who ran the job. Requires `runAs`
+                permission.
+            options:
+              type: object
+              properties: {}
+              description: Option value for option named `OPTNAME`. If specified the `argString`
+                value is ignored (*API v18* or later).
+        ExecuteJobRequest:
+          type: object
+          properties:
+            argString:
+              type: string
+              description: Argument string to pass to the job, of the form `-opt value
+                -opt2 value ...`
+            loglevel:
+              type: string
+              description: Loglevel to use
+              enum:
+              - DEBUG
+              - VERBOSE
+              - INFO
+              - WARN
+              - ERROR
+            asUser:
+              type: string
+              description: A username identifying the user who ran the job. Requires `runAs`
+                permission.
+            filter:
+              type: string
+              description: A node filter string.
+            runAtTime:
+              type: string
+              description: Specify a time to run the job (*API v18* or later). `ISO-8601`
+                format with optional milliseconds.
+            options:
+              type: object
+              properties: {}
+              description: Option value for option named `OPTNAME`. If specified the `argString`
+                value is ignored (*API v18* or later).
+        StorageKeyMetaType:
+          type: string
+          enum:
+          - private
+          - public
+          x-ms-enum:
+            name: StorageKeyMetaType
+        StorageKeyMetadata:
+          type: object
+          properties:
+            meta:
+              type: object
+              properties:
+                Rundeck-key-type:
+                  $ref: '#/components/schemas/StorageKeyMetaType'
+                Rundeck-content-mask:
+                  type: string
+                Rundeck-content-size:
+                  type: string
+                Rundeck-content-type:
+                  type: string
+            url:
+              type: string
+            name:
+              type: string
+            type:
+              type: string
+            path:
+              type: string
+        StorageKeyListResponse:
+          type: object
+          properties:
+            resources:
+              type: array
+              items:
+                $ref: '#/components/schemas/StorageKeyMetadata'
+            meta:
+              type: object
+              properties:
+                Rundeck-key-type:
+                  $ref: '#/components/schemas/StorageKeyMetaType'
+                Rundeck-content-mask:
+                  type: string
+                Rundeck-content-size:
+                  type: string
+                Rundeck-content-type:
+                  type: string
+            url:
+              type: string
+            type:
+              type: string
+            path:
+              type: string
+        Paging:
+          type: object
+          properties:
+            count:
+              type: integer
+            total:
+              type: integer
+            offset:
+              type: integer
+            max:
+              type: integer
+        ExecutionOutput:
+          required:
+          - clusterExec
+          - compacted
+          - completed
+          - entries
+          - execCompleted
+          - execDuration
+          - execState
+          - hasFailedNodes
+          - id
+          - lastModified
+          - offset
+          - retryBackoff
+          - totalSize
+          type: object
+          properties:
+            id:
+              type: string
+            error:
+              type: string
+            empty:
+              type: boolean
+            offset:
+              type: string
+            completed:
+              type: boolean
+            execCompleted:
+              type: boolean
+            hasFailedNodes:
+              type: boolean
+            execState:
+              type: string
+            lastModified:
+              type: string
+            execDuration:
+              type: number
+            percentLoaded:
+              type: number
+            totalSize:
+              type: number
+            retryBackoff:
+              type: number
+            clusterExec:
+              type: boolean
+            compacted:
+              type: boolean
+            entries:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutionOutputEntry'
+        ExecutionState:
+          required:
+          - completed
+          - executionId
+          - serverNode
+          type: object
+          properties:
+            executionId:
+              type: number
+            serverNode:
+              type: string
+            executionState:
+              $ref: '#/components/schemas/ExecutionStateState'
+            completed:
+              type: boolean
+            targetNodes:
+              type: array
+              items:
+                type: string
+            allNodes:
+              type: array
+              items:
+                type: string
+            stepCount:
+              type: number
+            updateTime:
+              type: string
+            startTime:
+              type: string
+            endTime:
+              type: string
+            nodes:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExecutionStateNodeState'
+            steps:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutionStateStep'
+        ExecutionStateState:
+          type: string
+          description: State value as used in execution state output
+          enum:
+          - SUCCEEDED
+          - FAILED
+          - RUNNING
+          - WAITING
+          x-ms-enum:
+            name: ExecutionStateState
+        ExecutionStateWorkflow:
+          required:
+          - completed
+          type: object
+          properties:
+            completed:
+              type: boolean
+            updateTime:
+              type: string
+            startTime:
+              type: string
+            endTime:
+              type: string
+            stepCount:
+              type: number
+            targetNodes:
+              type: array
+              items:
+                type: string
+            allNodes:
+              type: array
+              items:
+                type: string
+            steps:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutionStateStep'
+        ExecutionStateNodeState:
+          required:
+          - executionState
+          - stepctx
+          type: object
+          properties:
+            executionState:
+              $ref: '#/components/schemas/ExecutionStateState'
+            stepctx:
+              type: string
+        ExecutionStateStep:
+          required:
+          - duration
+          - executionState
+          - id
+          - nodeStep
+          - stepctx
+          type: object
+          properties:
+            id:
+              type: string
+            stepctx:
+              type: string
+            nodeStep:
+              type: boolean
+            executionState:
+              $ref: '#/components/schemas/ExecutionStateState'
+            duration:
+              type: number
+            startTime:
+              type: string
+            endTime:
+              type: string
+            updateTime:
+              type: string
+            nodeStates:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/ExecutionStateStepNodeState'
+            hasSubworkflow:
+              type: boolean
+            workflow:
+              $ref: '#/components/schemas/ExecutionStateWorkflow'
+            parameters:
+              type: object
+              additionalProperties:
+                type: string
+            parameterStates:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/ExecutionStateStep'
+        ExecutionStateStepNodeState:
+          required:
+          - duration
+          - executionState
+          type: object
+          properties:
+            executionState:
+              $ref: '#/components/schemas/ExecutionStateState'
+            duration:
+              type: number
+            startTime:
+              type: string
+            updateTime:
+              type: string
+            endTime:
+              type: string
+        ExecutionOutputEntry:
+          type: object
+          properties:
+            time:
+              type: string
+            absolute_time:
+              type: string
+            log:
+              type: string
+            level:
+              type: string
+            stepctx:
+              type: string
+            node:
+              type: string
+        WorkflowStep:
+          type: object
+          properties:
+            jobref:
+              type: object
+              properties:
+                name:
+                  type: string
+                group:
+                  type: string
+                uuid:
+                  type: string
+                nodeStep:
+                  type: string
+                importOptions:
+                  type: boolean
+            jobId:
+              type: string
+            description:
+              type: string
+            exec:
+              type: string
+            script:
+              type: string
+        scriptfile:
+          type: string
+        scripturl:
+          type: string
+        type:
+          type: string
+        nodeStep:
+          type: string
+        workflow:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowStep'
