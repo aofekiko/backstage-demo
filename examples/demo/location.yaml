@@ -20,5 +20,5 @@ spec:
     - ./users/groups/platform.yaml
     - ./users/groups/r&d.yaml
     - ./users/groups/org.yaml
-    - ./users/ofek/yaml
+    - ./users/ofek.yaml
     
